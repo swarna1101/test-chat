@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import structlog
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -11,6 +13,18 @@ class Settings(BaseSettings):
 
     # API key for accessing Google's Gemini AI service
     gemini_api_key: str = ""
+    # Tuning dataset path
+    tuning_dataset_path: Path = (
+        Path(__file__).parent.parent / "data" / "training_data.json"
+    )
+    # Base model to tune upon
+    tuning_source_model: str = "models/gemini-1.5-flash-001-tuning"
+    # Number of epochs to tune for
+    tuning_epoch_count: int = 100
+    # Batch size
+    tuning_batch_size: int = 4
+    # Learning rate
+    tuning_learning_rate: float = 0.001
 
     model_config = SettingsConfigDict(
         env_file=".env",

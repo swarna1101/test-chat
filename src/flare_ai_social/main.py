@@ -7,9 +7,7 @@ logger = structlog.get_logger(__name__)
 genai.configure(api_key=settings.gemini_api_key)
 
 
-def start(tuned_model_id: str) -> None:
-    tuned_model_id = "pugo-hillion"
-
+def start(tuned_model_id: str = "pugo-hillion") -> None:
     tuned_models = [m.name for m in genai.list_tuned_models()]
     logger.info("available tuned models", tuned_models=tuned_models)
 
@@ -27,4 +25,4 @@ def start(tuned_model_id: str) -> None:
 
 
 if __name__ == "__main__":
-    start(tuned_model_id="pugo-hillion")
+    start()

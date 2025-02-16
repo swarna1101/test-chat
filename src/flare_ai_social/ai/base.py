@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Literal, Protocol, TypedDict, runtime_checkable
+from typing import Any, Protocol, TypedDict, runtime_checkable
 
 import httpx
 import requests
@@ -74,19 +74,23 @@ class BaseAIProvider(ABC):
         """
 
 
+class Message(TypedDict):
+    role: str
+    content: str
+
+
 class CompletionRequest(TypedDict):
     model: str
     prompt: str
-
-
-class Message(TypedDict):
-    role: Literal["user", "assistant", "system"]
-    content: str
+    max_tokens: int
+    temperature: float
 
 
 class ChatRequest(TypedDict):
     model: str
     messages: list[Message]
+    max_tokens: int
+    temperature: float
 
 
 class BaseRouter:
