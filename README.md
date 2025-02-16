@@ -1,8 +1,8 @@
 # Flare AI Social
 
-## 🏗️ Build & Run Instructions
+Flare AI Kit template for Social AI Agents.
 
-You can deploy Flare AI DeFAI using Docker (recommended) or set up the backend and frontend manually.
+## 🏗️ Build & Run Instructions
 
 1. **Prepare the Environment File:**  
    Rename `.env.example` to `.env` and update the variables accordingly.
