@@ -36,6 +36,9 @@ tuning = [
     "seaborn>=0.13.2",
 ]
 
+[tool.uv]
+default-groups = ["dev", "tuning"]
+
 [tool.ruff]
 target-version = "py312"
 
