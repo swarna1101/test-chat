@@ -25,6 +25,12 @@ class Settings(BaseSettings):
     tuning_batch_size: int = 4
     # Learning rate
     tuning_learning_rate: float = 0.001
+    # X keys and token
+    x_bearer_token: str = ""
+    x_api_key: str = ""
+    x_api_key_secret: str = ""
+    x_access_token: str = ""
+    x_access_token_secret: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",

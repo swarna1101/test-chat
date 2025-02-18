@@ -16,6 +16,7 @@ dependencies = [
     "pyopenssl>=25.0.0",
     "requests>=2.32.3",
     "structlog>=25.1.0",
+    "tweepy>=4.15.0",
 ]
 
 [project.scripts]
