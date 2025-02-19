@@ -7,7 +7,8 @@ logger = structlog.get_logger(__name__)
 genai.configure(api_key=settings.gemini_api_key)
 
 
-def start(tuned_model_id: str = "pugo-hillion") -> None:
+def start() -> None:
+    tuned_model_id = settings.tuned_model_name
     tuned_models = [m.name for m in genai.list_tuned_models()]
     logger.info("available tuned models", tuned_models=tuned_models)
 
@@ -15,9 +16,14 @@ def start(tuned_model_id: str = "pugo-hillion") -> None:
     logger.info("tuned model info", model_info=model_info)
 
     model = genai.GenerativeModel(model_name=f"tunedModels/{tuned_model_id}")
-    prompt = "Uhhh, sorry guys, did we forget we are building the tech for the future?"
-    result = model.generate_content(prompt)
-    logger.info("generate", prompt=prompt, result=result.text)
+
+    prompts = [
+        "Uhhh, sorry guys, did we forget we are building the tech for the future?",
+        "Already have yield on my XRP.",
+    ]
+    for prompt in prompts:
+        result = model.generate_content(prompt)
+        logger.info("generate", prompt=prompt, result=result.text)
 
     # To be done:
     # - X API integration

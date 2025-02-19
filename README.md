@@ -12,7 +12,8 @@ Flare AI Kit template for Social AI Agents.
 
    | Parameter             | Description                                                                | Default                              |
    | --------------------- | -------------------------------------------------------------------------- | ------------------------------------ |
-   | `tuning_source_model` | Name of the model to tune.                                                 | `models/gemini-1.5-flash-001-tuning` |
+   | `tuned_model_name`    | Name of the newly tuned model.                                             | `pugo-hilion`                        |
+   | `tuning_source_model` | Name of the foundational model to tune on.                                 | `models/gemini-1.5-flash-001-tuning` |
    | `epoch_count`         | Number of tuning epochs to run. An epoch is a pass over the whole dataset. | `100`                                |
    | `batch_size`          | Number of examples to use in each training batch.                          | `4`                                  |
    | `learning_rate`       | Step size multiplier for the gradient updates.                             | `0.001`                              |
@@ -34,7 +35,7 @@ Flare AI Kit template for Social AI Agents.
    Ideally the loss should minimize to near 0 after several training epochs.
 
 5. **Test the new model**
-   Select the new tuned model and test it:
+   Select the new tuned model and test it against a set of prompts:
 
    ```bash
    uv run start-social
