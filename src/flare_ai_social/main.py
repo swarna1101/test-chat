@@ -17,7 +17,7 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from flare_ai_social import ChatRouter, GeminiProvider
+from flare_ai_social import ChatRouter, GeminiProvider, start_bot_manager
 from flare_ai_social.settings import settings
 
 logger = structlog.get_logger(__name__)
@@ -96,3 +96,4 @@ def start() -> None:
 
 if __name__ == "__main__":
     start()
+    start_bot_manager()
