@@ -44,7 +44,7 @@ class BaseAIProvider(ABC):
         """Reset the conversation history"""
 
     @abstractmethod
-    def generate(
+    def generate_content(
         self,
         prompt: str,
         response_mime_type: str | None = None,

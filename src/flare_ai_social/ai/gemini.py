@@ -35,7 +35,7 @@ class GeminiProvider(BaseAIProvider):
     """
 
     def __init__(
-        self, api_key: str, model: str, system_instruction: str | None = None
+        self, api_key: str, model_name: str, system_instruction: str | None = None
     ) -> None:
         """
         Initialize the Gemini provider with API credentials and model configuration.
@@ -49,11 +49,14 @@ class GeminiProvider(BaseAIProvider):
         genai.configure(api_key=api_key)
         self.chat: genai.ChatSession | None = None
         self.model = genai.GenerativeModel(
-            model_name=model,
+            model_name=model_name,
             system_instruction=system_instruction,
         )
         self.chat_history: list[ContentDict] = []
         self.logger = logger.bind(service="gemini")
+        self.logger.info(
+            "model setup", model_name=model_name, system_instruction=system_instruction
+        )
 
     @override
     def reset(self) -> None:
@@ -69,7 +72,7 @@ class GeminiProvider(BaseAIProvider):
         )
 
     @override
-    def generate(
+    def generate_content(
         self,
         prompt: str,
         response_mime_type: str | None = None,

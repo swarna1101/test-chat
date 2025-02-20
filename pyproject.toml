@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "cryptography>=44.0.1",
+    "fastapi>=0.115.8",
     "google-generativeai>=0.8.4",
     "httpx>=0.28.1",
     "pydantic-settings>=2.7.1",
@@ -17,11 +18,13 @@ dependencies = [
     "requests>=2.32.3",
     "structlog>=25.1.0",
     "tweepy>=4.15.0",
+    "uvicorn>=0.34.0",
 ]
 
 [project.scripts]
-start-social = "flare_ai_social.main:start"
+start-compare = "flare_ai_social.compare:start"
 start-tuning = "flare_ai_social.tune_model:start"
+start-backend = "flare_ai_social.main:start"
 
 [build-system]
 requires = ["hatchling"]
@@ -30,6 +33,7 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "pyright>=1.1.394",
+    "pytest>=8.3.4",
     "ruff>=0.9.6",
 ]
 tuning = [
