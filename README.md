@@ -85,7 +85,7 @@ Deploy Flare AI DeFAI on a Confidential Space Instances (using AMD SEV or Intel 
    Update your `.env` file with:
 
    ```bash
-   TEE_IMAGE_REFERENCE=ghcr.io/flare-foundation/flare-ai-defai:main  # Replace with your repo build image
+   TEE_IMAGE_REFERENCE=ghcr.io/flare-foundation/flare-ai-social:main  # Replace with your repo build image
    INSTANCE_NAME=<PROJECT_NAME-TEAM_NAME>
    ```
 
@@ -101,7 +101,7 @@ Deploy Flare AI DeFAI on a Confidential Space Instances (using AMD SEV or Intel 
 
    ```bash
    echo $TEE_IMAGE_REFERENCE
-   # Expected output: ghcr.io/YOUR_REPO_IMAGE:main
+   # Expected output: ghcr.io/flare-foundation/flare-ai-social:main # Your repo build image
    ```
 
 ### Deploying to Confidential Space
