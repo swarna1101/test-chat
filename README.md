@@ -115,7 +115,7 @@ src/flare_ai_social/
 
 ## 🚀 Deploy on TEE
 
-Deploy on a [Confidential Space](https://cloud.google.com/confidential-computing/confidential-space/docs/confidential-space-overview) using AMD SEV.
+Deploy on [Confidential Space](https://cloud.google.com/confidential-computing/confidential-space/docs/confidential-space-overview) using AMD SEV.
 
 ### Prerequisites
 
