@@ -2,54 +2,78 @@
 
 Flare AI Kit template for Social AI Agents.
 
-## 🏗️ Build & Run Instructions
+## 🚀 Key Features
 
-**Prepare the Environment File:**  
- Rename `.env.example` to `.env` and update the variables accordingly.
-Some parameters are specific to model fine-tuning:
+- **Secure AI Execution**  
+  Runs within a Trusted Execution Environment (TEE) featuring remote attestation support for robust security.
 
-| Parameter             | Description                                                                | Default                              |
-| --------------------- | -------------------------------------------------------------------------- | ------------------------------------ |
-| `tuned_model_name`    | Name of the newly tuned model.                                             | `pugo-hilion`                        |
-| `tuning_source_model` | Name of the foundational model to tune on.                                 | `models/gemini-1.5-flash-001-tuning` |
-| `epoch_count`         | Number of tuning epochs to run. An epoch is a pass over the whole dataset. | `30`                                 |
-| `batch_size`          | Number of examples to use in each training batch.                          | `4`                                  |
-| `learning_rate`       | Step size multiplier for the gradient updates.                             | `0.001`                              |
+- **Built-in Chat UI**  
+  Interact with your AI via a TEE-served chat interface.
 
-### Fine tuning a model over a dataset
+- **Gemini Fine-Tuning Support**  
+  Fine-tune foundational models with custom datasets.
 
-1. **Prepare a dataset:**
+- **Social media integrations**  
+  X and Telegram integrations with with rate limiting and retry mechanisms.
+
+## 🎯 Getting Started
+
+### Prerequisites
+
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
+
+### Fine-tune a model
+
+1. **Prepare Environment File**: Rename `.env.example` to `.env` and update these model fine-tuning parameters:
+
+   | Parameter             | Description                                                               | Default                            |
+   | --------------------- | ------------------------------------------------------------------------- | ---------------------------------- |
+   | `tuned_model_name`    | Name of the newly tuned model                                             | pugo-hilion                        |
+   | `tuning_source_model` | Name of the foundational model to tune on                                 | models/gemini-1.5-flash-001-tuning |
+   | `epoch_count`         | Number of tuning epochs to run. An epoch is a pass over the whole dataset | 30                                 |
+   | `batch_size`          | Number of examples to use in each training batch                          | 4                                  |
+   | `learning_rate`       | Step size multiplier for the gradient updates                             | 0.001                              |
+
+2. **Prepare a dataset:**
    An example dataset is provided in `src/data/training_data.json`, which consists of tweets from
    [Hugo Philion's X](https://x.com/HugoPhilion) account. You can use any publicly available dataset
    for model fine-tuning.
 
-2. **Tune a new model**
-   Set the name of the new tuned model in `src/flare_ai_social/tune_model.py`, then:
+3. **Tune a new model:**
+   Depending on the size of your dataset, this process can take several minutes:
 
    ```bash
    uv run start-tuning
    ```
 
-3. **Observe loss parameters:**
+4. **Observe loss parameters:**
    After tuning in complete, a training loss PNG will be saved in the root folder corresponding to the new model.
    Ideally the loss should minimize to near 0 after several training epochs.
 
    ![pugo-hilion_mean_loss](https://github.com/user-attachments/assets/f6c4d82b-678a-4ae5-bfb7-39dc59e1103d)
 
-4. **Test the new model**
+5. **Test the new model:**
    Select the new tuned model and compare it against a set of prompting techniques (zero-shot, few-shot and chain-of-thought):
 
    ```bash
    uv run start-compare
    ```
 
-### Build using Docker (Recommended)
+6. **Start Social Bots (optional):**:
 
-**Note:** You can only perform this step once you have finishing training a new model.
+   - Set up Twitter/X API credentials
+   - Configure Telegram bot token
+   - Enable/disable platforms as needed
+
+   ```bash
+   uv run start-bots
+   ```
+
+### Interact with model
 
 The Docker setup mimics a TEE environment and includes an Nginx server for routing, while Supervisor manages both the backend and frontend services in a single container.
 
-1. **Build the Docker Image:**
+1. **Build the Docker image**:
 
    ```bash
    docker build -t flare-ai-social .
@@ -62,7 +86,32 @@ The Docker setup mimics a TEE environment and includes an Nginx server for routi
    ```
 
 3. **Access the Frontend:**  
-   Open your browser and navigate to [http://localhost:80](http://localhost:80) to interact with the Chat UI.
+   Open your browser and navigate to [http://localhost:80](http://localhost:80) to interact with the tuned model via the Chat UI.
+
+## 📁 Repo Structure
+
+```plaintext
+src/flare_ai_social/
+├── ai/                            # AI Provider implementations
+│   ├── base.py                    # Base AI provider abstraction
+│   ├── gemini.py                  # Google Gemini integration
+│   └── openrouter.py             # OpenRouter integration
+├── api/                           # API layer
+│   └── routes/                    # API endpoint definitions
+├── attestation/                   # TEE attestation implementation
+│   ├── vtpm_attestation.py       # vTPM client
+│   └── vtpm_validation.py        # Token validation
+├── prompts/                       # Prompt engineering templates
+│   └── templates.py              # Different prompt strategies
+├── telegram/                      # Telegram bot implementation
+│   └── service.py                # Telegram service logic
+├── twitter/                       # Twitter bot implementation
+│   └── service.py                # Twitter service logic
+├── bot_manager.py                # Bot orchestration
+├── main.py                       # FastAPI application
+├── settings.py                   # Configuration settings
+└── tune_model.py                 # Model fine-tuning utilities
+```
 
 ## 🚀 Deploy on TEE
 
@@ -171,3 +220,7 @@ If you encounter issues, follow these steps:
 
 3. **Check Firewall Settings:**  
    Confirm that your instance is publicly accessible on port `80`.
+
+## 💡 Next Steps
+
+TODO
