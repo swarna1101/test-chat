@@ -1,4 +1,3 @@
-import asyncio
 import time
 from typing import Any, cast
 
@@ -18,6 +17,11 @@ from flare_ai_social.ai import BaseAIProvider
 logger = structlog.get_logger(__name__)
 
 
+ERR_API_TOKEN_NOT_PROVIDED = "Telegram API token not provided."
+ERR_BOT_NOT_INITIALIZED = "Bot not initialized."
+ERR_UPDATER_NOT_INITIALIZED = "Updater was not initialized"
+
+
 class TelegramBot:
     def __init__(
         self,
@@ -32,7 +36,7 @@ class TelegramBot:
         Args:
             ai_provider: The AI provider to use for generating responses.
             api_token: Telegram Bot API token.
-            allowed_user_ids: Optional list of allowed Telegram user IDs (for access control).
+            allowed_user_ids: Optional list of allowed Telegram user.
                               If empty or None, all users are allowed.
             polling_interval: Time between update checks in seconds.
         """
@@ -49,9 +53,7 @@ class TelegramBot:
         self.last_processed_time: dict[int, float] = {}
 
         if not self.api_token:
-            raise ValueError(
-                "Telegram API token not provided. Please check your settings."
-            )
+            raise ValueError(ERR_API_TOKEN_NOT_PROVIDED)
 
         if self.allowed_user_ids:
             logger.info(
@@ -101,19 +103,21 @@ class TelegramBot:
                     "chat": self._safe_dict(message.chat),
                     "date": str(message.date),
                     "text": message.text,
-                    # message.entities is always a tuple (possibly empty)
                     "has_entities": bool(message.entities),
                 }
                 if message.entities:
-                    # Cast result["message"] to dict[str, Any] so that assignment is accepted.
-                    cast(dict[str, Any], result["message"])["entities"] = [
+                    # Cast result["message"] to dict[str, Any] for type safety
+                    msg_dict = cast(dict[str, Any], result["message"])
+                    msg_dict["entities"] = [
                         {
                             "type": e.type,
                             "offset": e.offset,
                             "length": e.length,
-                            "text": message.text[e.offset : e.offset + e.length]
-                            if message.text
-                            else None,
+                            "text": (
+                                message.text[e.offset : e.offset + e.length]
+                                if message.text
+                                else None
+                            ),
                         }
                         for e in message.entities
                     ]
@@ -124,18 +128,21 @@ class TelegramBot:
                         "from_user": self._safe_dict(reply.from_user),
                         "text": reply.text,
                     }
+                return result
             return result
         except Exception as e:
-            logger.exception(f"Error dumping update: {e}")
+            logger.exception("Error dumping update")
             return {"error": str(e)}
+        else:
+            return {"error": "Update is None"}
 
     async def catch_all(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+        self, update: Update, _context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         """Catch-all handler to log any received updates."""
         try:
             logger.warning(
-                "CATCH ALL RECEIVED UPDATES",
+                "Catch all received updates",
                 update_type=str(type(update)),
                 has_message=(update.message is not None),
                 chat_type=(
@@ -143,28 +150,27 @@ class TelegramBot:
                 ),
                 message_text=(update.message.text if update.message else None),
             )
-        except Exception as e:
-            logger.exception(f"Error in catch_all handler: {e}")
+        except Exception:
+            logger.exception("Error in catch_all handler")
 
     async def raw_update_handler(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+        self, update: Update, _context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         """Log raw update data for debugging."""
         try:
             _ = self._dump_update(update)
-            if update.message and update.message.text:
-                if self.me and self.me.username:
-                    possible_mentions = [
-                        f"@{self.me.username}",
-                        self.me.username,
-                        self.me.first_name,
-                    ]
-                    _ = any(
-                        mention.lower() in update.message.text.lower()
-                        for mention in possible_mentions
-                    )
-        except Exception as e:
-            logger.exception(f"Error in raw update handler: {e}")
+            if update.message and update.message.text and self.me and self.me.username:
+                possible_mentions = [
+                    f"@{self.me.username}",
+                    self.me.username,
+                    self.me.first_name,
+                ]
+                _ = any(
+                    mention.lower() in update.message.text.lower()
+                    for mention in possible_mentions
+                )
+        except Exception:
+            logger.exception("Error in raw update handler")
 
     async def debug_command(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -176,8 +182,8 @@ class TelegramBot:
         if not self.me:
             try:
                 self.me = await context.bot.get_me()
-            except Exception as e:
-                logger.exception(f"Failed to get bot info in debug command: {e}")
+            except Exception:
+                logger.exception("Failed to get bot info in debug command")
 
         chat_id = update.effective_chat.id
         chat_type = update.effective_chat.type
@@ -200,7 +206,7 @@ class TelegramBot:
         )
 
     async def start_command(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+        self, update: Update, _context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         """Handle the /start command."""
         if not update.effective_user or not update.message or not update.effective_chat:
@@ -218,12 +224,12 @@ class TelegramBot:
 
         await update.message.reply_text(
             f"👋 Hello {user.first_name}! I'm the Flare AI assistant. "
-            f"Feel free to ask me anything about Flare Network, FTSO, XRP, or blockchain topics."
+            f"Feel free to ask me anything about Flare Network."
         )
         logger.info("Start command handled", user_id=user_id)
 
     async def help_command(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+        self, update: Update, _context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         """Handle the /help command."""
         if not update.effective_user or not update.message or not update.effective_chat:
@@ -240,7 +246,7 @@ class TelegramBot:
 
         help_text = (
             "🤖 *Flare AI Assistant Help*\n\n"
-            "I can answer questions about Flare Network, FTSO, cryptocurrencies, and more.\n\n"
+            "I can answer questions about Flare Network."
             "*Available commands:*\n"
             "/start - Start the conversation\n"
             "/help - Show this help message\n"
@@ -249,13 +255,67 @@ class TelegramBot:
         )
         await update.message.reply_text(help_text, parse_mode="Markdown")
 
+    async def _process_group_chat_mention(
+        self, text: str, entities: tuple[MessageEntity, ...], update: Update
+    ) -> tuple[bool, str]:
+        """Check if bot was mentioned in group chat and return cleaned message text."""
+        if not self.me or not self.me.username:
+            return False, text
+
+        # Check direct mentions using entities
+        for entity in entities:
+            if entity.type == "mention":
+                mention_text = text[entity.offset : entity.offset + entity.length]
+                bot_username = self.me.username.lower()
+                mention_without_at = (
+                    mention_text[1:].lower()
+                    if mention_text.startswith("@")
+                    else mention_text.lower()
+                )
+                if mention_without_at == bot_username:
+                    return True, text.replace(mention_text, "").strip()
+
+        # Check text-based mentions
+        for variation in [f"@{self.me.username}", f"@{self.me.username.lower()}"]:
+            if variation.lower() in text.lower():
+                idx = text.lower().find(variation.lower())
+                if idx >= 0:
+                    actual_length = len(variation)
+                    actual_mention = text[idx : idx + actual_length]
+                    return True, text.replace(actual_mention, "").strip()
+
+        # Check if message is a reply to bot
+        if (
+            update.message
+            and update.message.reply_to_message
+            and update.message.reply_to_message.from_user
+            and self.me
+            and update.message.reply_to_message.from_user.id == self.me.id
+        ):
+            return True, text
+
+        return False, text
+
+    async def _handle_unauthorized_access(
+        self, update: Update, chat_type: str, user_id: int, chat_id: int | str
+    ) -> bool:
+        """Handle unauthorized user access."""
+        if chat_type == "private" and update.message:
+            await update.message.reply_text(
+                "Sorry, you are not authorized to use this bot."
+            )
+        logger.warning(
+            "Unauthorized message",
+            user_id=user_id,
+            chat_id=chat_id,
+            is_group=chat_type != "private",
+        )
+        return True
+
     async def handle_message(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
-        """Handle incoming messages and generate AI responses.
-        - In private chats: respond to every message.
-        - In group chats: respond only when the bot is mentioned.
-        """
+        """Handle incoming messages and generate AI responses."""
         if not update.message or not update.effective_user or not update.effective_chat:
             logger.warning("Missing message, user, or chat; skipping")
             return
@@ -266,18 +326,20 @@ class TelegramBot:
         user_id: int = user.id
         chat: Chat = update.effective_chat
         chat_id: int | str = chat.id
+        chat_type: str = chat.type
 
+        # Get bot info if not already available
         if not self.me:
             try:
                 self.me = await context.bot.get_me()
                 logger.info(
-                    "Got bot information",
+                    "Bot information retrieved",
                     bot_id=self.me.id,
                     bot_username=self.me.username,
                     bot_first_name=self.me.first_name,
                 )
-            except Exception as e:
-                logger.exception(f"Failed to get bot info: {e}")
+            except Exception:
+                logger.exception("Failed to get bot info")
                 return
 
         if not update.message.text:
@@ -285,74 +347,26 @@ class TelegramBot:
             return
 
         var_text: str = update.message.text
+        is_group_chat = chat_type in ["group", "supergroup", "channel"]
 
-        is_group_chat = chat.type in ["group", "supergroup", "channel"]
-        is_private_chat = chat.type == "private"
-
-        # Log message details for debugging.
+        # Log message details
         entities: tuple[MessageEntity, ...] = update.message.entities
-        log_data = {
-            "user_id": user_id,
-            "chat_id": chat_id,
-            "chat_type": chat.type,
-            "message_id": update.message.message_id,
-            "message_text": var_text,
-            "has_entities": bool(entities),
-            "entity_count": len(entities),
-            "bot_username": self.me.username if self.me else "unknown",
-        }
-        logger.info("Received message details", **log_data)
+        logger.info(
+            "Received message details",
+            user_id=user_id,
+            chat_id=chat_id,
+            chat_type=chat_type,
+            message_id=update.message.message_id,
+            message_text=var_text,
+            has_entities=bool(entities),
+            entity_count=len(entities),
+            bot_username=self.me.username if self.me else "unknown",
+        )
 
-        is_mentioned = False
-        if is_group_chat and self.me and self.me.username:
-            # Check direct mentions using entities.
-            for entity in entities:
-                if entity.type == "mention":
-                    mention_text = var_text[
-                        entity.offset : entity.offset + entity.length
-                    ]
-                    bot_username = self.me.username.lower()
-                    # Remove the leading "@" if present.
-                    mention_without_at = (
-                        mention_text[1:].lower()
-                        if mention_text.startswith("@")
-                        else mention_text.lower()
-                    )
-                    if mention_without_at == bot_username:
-                        is_mentioned = True
-                        var_text = var_text.replace(mention_text, "").strip()
-                        break
-            # Additional text-based check.
-            if not is_mentioned:
-                for variation in [
-                    f"@{self.me.username}",
-                    f"@{self.me.username.lower()}",
-                ]:
-                    if variation.lower() in var_text.lower():
-                        is_mentioned = True
-                        idx = var_text.lower().find(variation.lower())
-                        if idx >= 0:
-                            actual_length = len(variation)
-                            actual_mention = var_text[idx : idx + actual_length]
-                            var_text = var_text.replace(actual_mention, "").strip()
-                        break
-            # Reply check.
-            if (
-                not is_mentioned
-                and update.message.reply_to_message
-                and update.message.reply_to_message.from_user
-            ):
-                reply_user_id = update.message.reply_to_message.from_user.id
-                if self.me and reply_user_id == self.me.id:
-                    is_mentioned = True
-                    logger.info("Message is a reply to bot")
-            logger.info(
-                "Group mention detection result",
-                is_mentioned=is_mentioned,
-                chat_id=chat_id,
-                user_id=user_id,
-                chat_type=chat.type,
-                bot_username=self.me.username if self.me else "unknown",
+        # Handle group chat mentions
+        if is_group_chat:
+            is_mentioned, var_text = await self._process_group_chat_mention(
+                var_text, entities, update
             )
             if not is_mentioned:
                 logger.debug(
@@ -369,19 +383,15 @@ class TelegramBot:
                     user_id=user_id,
                 )
 
-        if not self._is_user_allowed(user_id):
-            if is_private_chat:
-                await update.message.reply_text(
-                    "Sorry, you're not authorized to use this bot."
-                )
-            logger.warning(
-                "Unauthorized message",
-                user_id=user_id,
-                chat_id=chat_id,
-                is_group=is_group_chat,
-            )
+        # Check user authorization
+        if not self._is_user_allowed(
+            user_id
+        ) and await self._handle_unauthorized_access(
+            update, chat_type, user_id, chat_id
+        ):
             return
 
+        # Generate and send AI response
         logger.info(
             "Processing message",
             user_id=user_id,
@@ -394,10 +404,9 @@ class TelegramBot:
             await context.bot.send_chat_action(chat_id=chat_id, action="typing")
             ai_response = self.ai_provider.generate_content(var_text)
             response_text = ai_response.text
-            # Use chat_id if it's an int; otherwise default to 0 in tracking.
-            self.last_processed_time[chat_id if isinstance(chat_id, int) else 0] = (
-                time.time()
-            )
+
+            chat_id_key = int(chat_id) if isinstance(chat_id, str) else chat_id
+            self.last_processed_time[chat_id_key] = time.time()
             await update.message.reply_text(response_text)
             logger.info(
                 "Sent AI response",
@@ -405,8 +414,8 @@ class TelegramBot:
                 user_id=user_id,
                 is_group=is_group_chat,
             )
-        except Exception as e:
-            logger.error(f"Error generating AI response: {e}", exc_info=True)
+        except Exception:
+            logger.exception("Error generating AI response")
             await update.message.reply_text(
                 "I'm having trouble processing your request. Please try again later."
             )
@@ -415,12 +424,16 @@ class TelegramBot:
         self, update: object, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         """Handle errors in the telegram bot."""
-        logger.error(f"Telegram error: {context.error}", update=update)
+        logger.error("Telegram error", error=context.error, update=update)
 
     async def initialize(self) -> None:
         """Initialize the bot application."""
         logger.info("Initializing Telegram bot")
-        self.application = Application.builder().token(self.api_token).build()
+
+        # Build the application with default settings
+        builder = Application.builder().token(self.api_token)
+        self.application = builder.build()
+
         try:
             self.me = await Bot(self.api_token).get_me()
             logger.info(
@@ -429,40 +442,49 @@ class TelegramBot:
                 bot_username=self.me.username,
                 bot_first_name=self.me.first_name,
             )
-        except TelegramError as e:
-            logger.exception(f"Failed to get bot info: {e}")
+        except TelegramError:
+            logger.exception("Failed to get bot info")
             self.me = None
 
-        self.application.add_handler(
-            MessageHandler(filters.ALL, self.catch_all), group=-9999
-        )
-        self.application.add_handler(
-            MessageHandler(filters.ALL, self.raw_update_handler), group=-999
-        )
-        self.application.add_handler(CommandHandler("debug", self.debug_command))
+        # Add handlers in the correct order
         self.application.add_handler(CommandHandler("start", self.start_command))
         self.application.add_handler(CommandHandler("help", self.help_command))
+        self.application.add_handler(CommandHandler("debug", self.debug_command))
+
+        # Add message handler for text messages
         self.application.add_handler(
             MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message)
         )
+
+        # Add error handler
         self.application.add_error_handler(self.error_handler)
+
+        # Initialize the application
         await self.application.initialize()
+        logger.info("Telegram bot initialized successfully")
 
     async def start_polling(self) -> None:
         """Start polling for updates."""
         if not self.application:
-            raise RuntimeError("Bot not initialized. Call initialize() first.")
-        logger.info("Starting Telegram bot polling")
-        # Use the run_polling coroutine provided by the Application.
-        await self.application.run_polling(poll_interval=self.polling_interval)
+            raise RuntimeError(ERR_BOT_NOT_INITIALIZED)
 
-    async def shutdown(self) -> None:
-        """Shut down the bot."""
-        if self.application:
-            logger.info("Shutting down Telegram bot")
-            # Depending on the Application API version, stop() may not be awaitable.
-            self.application.stop()
-            await self.application.shutdown()
+        logger.info("Starting Telegram bot polling")
+
+        await self.application.start()
+
+        # Type assertion to help Pyright understand that updater exists
+        if self.application.updater is None:
+            raise RuntimeError(ERR_UPDATER_NOT_INITIALIZED)
+
+        await self.application.updater.start_polling(
+            poll_interval=self.polling_interval,
+            timeout=30,
+            bootstrap_retries=-1,
+            read_timeout=30,
+            write_timeout=30,
+            connect_timeout=30,
+            pool_timeout=30,
+        )
 
     async def start(self) -> None:
         """Start the Telegram bot."""
@@ -470,11 +492,16 @@ class TelegramBot:
             logger.info("Starting Telegram bot")
             await self.initialize()
             await self.start_polling()
-            while True:
-                await asyncio.sleep(1)
         except KeyboardInterrupt:
             logger.info("Telegram bot stopped by user")
-        except Exception as e:
-            logger.error(f"Fatal error in Telegram bot: {e}", exc_info=True)
+        except Exception:
+            logger.exception("Fatal error in Telegram bot")
         finally:
             await self.shutdown()
+
+    async def shutdown(self) -> None:
+        """Shut down the bot."""
+        if self.application:
+            logger.info("Shutting down Telegram bot")
+            await self.application.stop()
+            await self.application.shutdown()

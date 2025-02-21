@@ -2,6 +2,7 @@ import asyncio
 import calendar
 import time
 import uuid
+from dataclasses import dataclass
 from typing import Any
 
 import aiohttp
@@ -12,47 +13,60 @@ from flare_ai_social.ai import BaseAIProvider
 logger = structlog.get_logger(__name__)
 
 
+HTTP_OK = 200
+HTTP_RATE_LIMIT = 429
+HTTP_SERVER_ERROR = 500
+ERR_TWITTER_CREDENTIALS = "Required Twitter API credentials not provided."
+ERR_RAPIDAPI_KEY = "RapidAPI key not provided. Please check your settings."
+FALLBACK_REPLY = "We're experiencing some difficulties."
+
+
+@dataclass
+class TwitterConfig:
+    """Configuration for Twitter API credentials and settings"""
+
+    bearer_token: str | None = None
+    api_key: str | None = None
+    api_secret: str | None = None
+    access_token: str | None = None
+    access_secret: str | None = None
+    rapidapi_key: str | None = None
+    rapidapi_host: str | None = "twitter241.p.rapidapi.com"
+    accounts_to_monitor: list[str] | None = None
+    polling_interval: int = 30
+
+
 class TwitterBot:
     def __init__(
         self,
         ai_provider: BaseAIProvider,
-        bearer_token: str | None = None,
-        api_key: str | None = None,
-        api_secret: str | None = None,
-        access_token: str | None = None,
-        access_secret: str | None = None,
-        rapidapi_key: str | None = None,
-        rapidapi_host: str | None = "twitter241.p.rapidapi.com",
-        accounts_to_monitor: list[str] | None = None,
-        polling_interval: int = 30,  # Interval in seconds between checks and lookback window
+        config: TwitterConfig,
     ) -> None:
         self.ai_provider = ai_provider
 
         # Twitter API credentials
-        self.bearer_token = bearer_token
-        self.api_key = api_key
-        self.api_secret = api_secret
-        self.access_token = access_token
-        self.access_secret = access_secret
+        self.bearer_token = config.bearer_token
+        self.api_key = config.api_key
+        self.api_secret = config.api_secret
+        self.access_token = config.access_token
+        self.access_secret = config.access_secret
 
         # RapidAPI credentials
-        self.rapidapi_key = rapidapi_key
-        self.rapidapi_host = rapidapi_host
+        self.rapidapi_key = config.rapidapi_key
+        self.rapidapi_host = config.rapidapi_host
 
         # Check if required credentials are provided
         if not all(
             [self.api_key, self.api_secret, self.access_token, self.access_secret]
         ):
-            msg = "Required Twitter API credentials not provided. Please check your settings."
-            raise ValueError(msg)
+            raise ValueError(ERR_TWITTER_CREDENTIALS)
 
         if not self.rapidapi_key:
-            msg = "RapidAPI key not provided. Please check your settings."
-            raise ValueError(msg)
+            raise ValueError(ERR_RAPIDAPI_KEY)
 
         # Monitoring parameters
-        self.accounts_to_monitor = accounts_to_monitor or ["@privychatxyz"]
-        self.polling_interval = polling_interval
+        self.accounts_to_monitor = config.accounts_to_monitor or ["@privychatxyz"]
+        self.polling_interval = config.polling_interval
 
         # API endpoints
         self.twitter_api_base = "https://api.twitter.com/2"
@@ -75,7 +89,6 @@ class TwitterBot:
         method: str,
         url: str,
         params: dict[str, Any] | None = None,
-        json_data: Any | None = None,
     ) -> str:
         """Generate OAuth 1.0a authorization for Twitter API v2 requests"""
         import base64
@@ -113,10 +126,16 @@ class TwitterBot:
 
         # Create signature base string
         base_url = url.split("?")[0]
-        base_string = f"{method.upper()}&{self._url_encode(base_url)}&{self._url_encode(param_string)}"
+        base_string = (
+            f"{method.upper()}&{self._url_encode(base_url)}&"
+            f"{self._url_encode(param_string)}"
+        )
 
         # Create signing key
-        signing_key = f"{self._url_encode(self.api_secret)}&{self._url_encode(self.access_secret)}"
+        signing_key = (
+            f"{self._url_encode(self.api_secret)}&"
+            f"{self._url_encode(self.access_secret)}"
+        )
 
         # Generate signature
         signature = base64.b64encode(
@@ -161,61 +180,63 @@ class TwitterBot:
 
         try:
             headers = self._get_twitter_api_headers("POST", url)
+            timeout = aiohttp.ClientTimeout(total=30)
 
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
+            async with (
+                aiohttp.ClientSession() as session,
+                session.post(
                     url,
                     headers=headers,
                     json=payload,
-                    timeout=aiohttp.ClientTimeout(total=30),
-                ) as response:
-                    if response.status in [200, 201]:
-                        result = await response.json()
-                        logger.info(
-                            f"Tweet posted successfully: {result['data']['id']}"
-                        )
-                        return result["data"]["id"]
-                    if response.status >= 500 and retry_count < max_retries:
-                        retry_delay = (2**retry_count) * 2
-                        logger.warning(
-                            f"Twitter API server error ({response.status}), retrying in {retry_delay} seconds",
-                            retry_count=retry_count + 1,
-                            max_retries=max_retries,
-                        )
-                        await asyncio.sleep(retry_delay)
-                        return await self.post_tweet(text, retry_count + 1, max_retries)
-                    if response.status == 429 and retry_count < max_retries:
-                        retry_delay = (2**retry_count) * 10
-                        logger.warning(
-                            f"Twitter API rate limit (429), retrying in {retry_delay} seconds",
-                            retry_count=retry_count + 1,
-                            max_retries=max_retries,
-                        )
-                        await asyncio.sleep(retry_delay)
-                        return await self.post_tweet(text, retry_count + 1, max_retries)
-                    error_text = await response.text()
-                    logger.error(
-                        f"Failed to post tweet, status {response.status}: {error_text}"
+                    timeout=timeout,
+                ) as response,
+            ):
+                if response.status in [HTTP_OK, 201]:
+                    result = await response.json()
+                    tweet_id = result["data"]["id"]
+                    logger.info("Tweet posted successfully: %s", tweet_id)
+                    return tweet_id
+
+                error_text = await response.text()
+                should_retry = retry_count < max_retries and (
+                    response.status >= HTTP_SERVER_ERROR
+                    or response.status == HTTP_RATE_LIMIT
+                )
+
+                if should_retry:
+                    delay_multiplier = 10 if response.status == HTTP_RATE_LIMIT else 2
+                    retry_delay = (2**retry_count) * delay_multiplier
+                    logger.warning(
+                        "Twitter API error, retrying",
+                        status=response.status,
+                        retry_count=retry_count + 1,
+                        max_retries=max_retries,
                     )
-                    return None
+                    await asyncio.sleep(retry_delay)
+                    return await self.post_tweet(text, retry_count + 1, max_retries)
+
+                logger.error(
+                    "Failed to post tweet",
+                    status=response.status,
+                    error=error_text,
+                )
 
         except TimeoutError:
             if retry_count < max_retries:
                 retry_delay = (2**retry_count) * 5
                 logger.warning(
-                    f"Twitter API connection timeout, retrying in {retry_delay} seconds",
+                    "Twitter API connection timeout, retrying",
+                    retry_delay=retry_delay,
                     retry_count=retry_count + 1,
                     max_retries=max_retries,
                 )
                 await asyncio.sleep(retry_delay)
                 return await self.post_tweet(text, retry_count + 1, max_retries)
-            logger.exception(
-                f"Twitter API connection timeout after {max_retries} retries"
-            )
-            return None
-        except Exception as e:
-            logger.exception(f"Error posting tweet: {e}")
-            return None
+            logger.exception("Twitter API connection timeout")
+        except Exception:
+            logger.exception("Error posting tweet")
+
+        return None
 
     async def post_reply(
         self,
@@ -234,84 +255,70 @@ class TwitterBot:
         try:
             headers = self._get_twitter_api_headers("POST", url)
 
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
+            async with (
+                aiohttp.ClientSession() as session,
+                session.post(
                     url,
                     headers=headers,
                     json=payload,
                     timeout=aiohttp.ClientTimeout(total=30),
-                ) as response:
-                    if response.status in [200, 201]:
-                        result = await response.json()
-                        logger.info(
-                            f"Reply posted successfully: {result['data']['id']}"
-                        )
-                        return result["data"]["id"]
-                    if response.status >= 500 and retry_count < max_retries:
-                        retry_delay = (2**retry_count) * 2
-                        logger.warning(
-                            f"Twitter API server error ({response.status}), retrying reply in {retry_delay} seconds",
-                            retry_count=retry_count + 1,
-                            max_retries=max_retries,
-                        )
-                        await asyncio.sleep(retry_delay)
-                        return await self.post_reply(
-                            reply_text,
-                            tweet_id_to_reply_to,
-                            retry_count + 1,
-                            max_retries,
-                        )
-                    if response.status == 429 and retry_count < max_retries:
-                        retry_delay = (2**retry_count) * 10
-                        logger.warning(
-                            f"Twitter API rate limit (429), retrying reply in {retry_delay} seconds",
-                            retry_count=retry_count + 1,
-                            max_retries=max_retries,
-                        )
-                        await asyncio.sleep(retry_delay)
-                        return await self.post_reply(
-                            reply_text,
-                            tweet_id_to_reply_to,
-                            retry_count + 1,
-                            max_retries,
-                        )
-                    error_text = await response.text()
-                    logger.error(
-                        f"Failed to post reply, status {response.status}: {error_text}"
-                    )
-                    return None
+                ) as response,
+            ):
+                if response.status in [HTTP_OK, 201]:
+                    result = await response.json()
+                    logger.info("Reply posted successfully")
+                    return result["data"]["id"]
 
-        except TimeoutError:
-            if retry_count < max_retries:
-                retry_delay = (2**retry_count) * 5
+                error_text = await response.text()
+                should_retry = retry_count < max_retries and (
+                    response.status == HTTP_RATE_LIMIT
+                    or isinstance(response, TimeoutError)
+                )
+
+                if should_retry:
+                    delay_multiplier = 10 if response.status == HTTP_RATE_LIMIT else 5
+
+                    retry_delay = (2**retry_count) * delay_multiplier
+                    logger.warning(
+                        "Twitter API error, retrying",
+                        status=response.status,
+                        retry_count=retry_count + 1,
+                        max_retries=max_retries,
+                    )
+                    await asyncio.sleep(retry_delay)
+                    return await self.post_reply(
+                        reply_text,
+                        tweet_id_to_reply_to,
+                        retry_count + 1,
+                        max_retries,
+                    )
+
+                logger.error(
+                    "Failed to post reply",
+                    status=response.status,
+                    error=error_text,
+                )
+
+        except Exception as e:
+            should_retry = retry_count < max_retries
+            if should_retry:
+                retry_delay = (2**retry_count) * 3
                 logger.warning(
-                    f"Twitter API connection timeout, retrying reply in {retry_delay} seconds",
+                    "Error posting reply, retrying",
+                    error=str(e),
                     retry_count=retry_count + 1,
                     max_retries=max_retries,
                 )
                 await asyncio.sleep(retry_delay)
                 return await self.post_reply(
-                    reply_text, tweet_id_to_reply_to, retry_count + 1, max_retries
+                    reply_text,
+                    tweet_id_to_reply_to,
+                    retry_count + 1,
+                    max_retries,
                 )
-            logger.exception(
-                f"Twitter API connection timeout after {max_retries} retries"
-            )
-            return None
-        except Exception as e:
-            logger.exception(f"Error posting reply: {e}")
-            if retry_count >= max_retries:
-                logger.exception(f"Failed to post reply after {max_retries} attempts")
-                return None
-            if retry_count < max_retries:
-                retry_delay = (2**retry_count) * 3
-                logger.warning(
-                    f"Unexpected error posting reply, retrying in {retry_delay} seconds: {e}"
-                )
-                await asyncio.sleep(retry_delay)
-                return await self.post_reply(
-                    reply_text, tweet_id_to_reply_to, retry_count + 1, max_retries
-                )
-            return None
+            logger.exception("Failed to post reply after max retries")
+
+        return None
 
     async def search_twitter(
         self,
@@ -329,14 +336,15 @@ class TwitterBot:
                 headers=self._get_rapidapi_headers(),
                 params=params,
             ) as response:
-                if response.status == 200:
+                if response.status == HTTP_OK:
                     result = await response.json()
                     return self._extract_tweets_from_response(result)
-                if response.status == 429 and retry_count < max_retries:
+                if response.status == HTTP_RATE_LIMIT and retry_count < max_retries:
                     error_text = await response.text()
                     retry_delay = (2**retry_count) * 2
                     logger.warning(
-                        f"Rate limit exceeded (429), retrying in {retry_delay} seconds",
+                        "Rate limit exceeded (429), retrying in %d seconds",
+                        retry_delay,
                         retry_count=retry_count + 1,
                         max_retries=max_retries,
                         error=error_text,
@@ -347,11 +355,13 @@ class TwitterBot:
                     )
                 error_text = await response.text()
                 logger.error(
-                    f"Search failed with status {response.status}: {error_text}"
+                    "Search failed with status %d: %s",
+                    response.status,
+                    error_text,
                 )
                 return []
-        except Exception as e:
-            logger.exception(f"Error during search for {keyword}: {e}")
+        except Exception:
+            logger.exception("Error during search for %s", keyword)
             return []
 
     def _extract_tweets_from_response(
@@ -403,10 +413,11 @@ class TwitterBot:
                                             },
                                         }
                                         tweets.append(tweet)
-            return tweets
-        except Exception as e:
-            logger.exception(f"Error extracting tweets from response: {e}")
+        except Exception:
+            logger.exception("Error extracting tweets from response")
             return []
+        else:
+            return tweets
 
     def process_tweets(
         self, tweets: list[dict[str, Any]], account: str
@@ -430,8 +441,8 @@ class TwitterBot:
                 tweet_timestamp = calendar.timegm(created_time)
                 if tweet_timestamp < time_window_ago:
                     continue
-            except (ValueError, KeyError) as e:
-                logger.exception(f"Error parsing tweet timestamp: {e}")
+            except (ValueError, KeyError):
+                logger.exception("Error parsing tweet timestamp")
                 continue
 
             mentioned = False
@@ -444,7 +455,9 @@ class TwitterBot:
                 continue
 
             logger.info(
-                f"Found recent mention (within last {self.polling_interval} sec): {tweet['id_str']}"
+                "Found recent mention (within last %d sec): %s",
+                self.polling_interval,
+                tweet["id_str"],
             )
             new_mentions.append(tweet)
 
@@ -475,9 +488,9 @@ class TwitterBot:
                 response_text = response_text[: max_chars - 3] + "..."
 
             await self.post_reply(response_text, tweet_id)
-        except Exception as e:
-            logger.exception(f"Error generating AI response: {e}")
-            fallback_reply = f"@{username} Thanks for reaching out! We're experiencing some technical difficulties. We'll get back to you soon."
+        except Exception:
+            logger.exception("Error generating AI response")
+            fallback_reply = f"@{username} {FALLBACK_REPLY}"
             await self.post_reply(fallback_reply, tweet_id)
 
     async def monitor_mentions(self) -> None:
@@ -486,29 +499,32 @@ class TwitterBot:
             while True:
                 try:
                     for account in self.accounts_to_monitor:
-                        logger.debug(f"Searching for mentions of {account}")
+                        logger.debug("Searching for mentions of %s", account)
                         tweets = await self.search_twitter(account, session)
                         new_mentions = self.process_tweets(tweets, account)
 
                         if new_mentions:
                             logger.info(
-                                f"Found {len(new_mentions)} new mentions for {account}"
+                                "Found %d new mentions for %s",
+                                len(new_mentions),
+                                account,
                             )
                             for tweet in new_mentions:
                                 await self.handle_mention(tweet)
                         else:
-                            logger.debug(f"No new mentions found for {account}")
+                            logger.debug("No new mentions found for %s", account)
 
                         if len(self.accounts_to_monitor) > 1:
                             await asyncio.sleep(1)
 
                     logger.debug(
-                        f"Completed mention check cycle, sleeping for {self.polling_interval} seconds"
+                        "Completed mention check cycle, sleeping for %d seconds",
+                        self.polling_interval,
                     )
                     await asyncio.sleep(self.polling_interval)
 
-                except Exception as e:
-                    logger.exception(f"Error in monitoring loop: {e}")
+                except Exception:
+                    logger.exception("Error in monitoring loop")
                     await asyncio.sleep(self.polling_interval * 2)
 
     def start(self) -> None:
@@ -518,5 +534,5 @@ class TwitterBot:
             asyncio.run(self.monitor_mentions())
         except KeyboardInterrupt:
             logger.info("Bot stopped by user")
-        except Exception as e:
-            logger.exception(f"Fatal error: {e}")
+        except Exception:
+            logger.exception("Fatal error")
