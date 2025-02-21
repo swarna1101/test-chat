@@ -34,32 +34,40 @@ Flare AI Kit template for Social AI Agents.
    | `batch_size`          | Number of examples to use in each training batch                          | 4                                  |
    | `learning_rate`       | Step size multiplier for the gradient updates                             | 0.001                              |
 
-2. **Prepare a dataset:**
+   Ensure your [Gemini API key](https://aistudio.google.com/app/apikey) is setup.
+
+2. **Install dependencies:**
+
+   ```bash
+   uv sync --all-extras
+   ```
+
+3. **Prepare a dataset:**
    An example dataset is provided in `src/data/training_data.json`, which consists of tweets from
    [Hugo Philion's X](https://x.com/HugoPhilion) account. You can use any publicly available dataset
    for model fine-tuning.
 
-3. **Tune a new model:**
+4. **Tune a new model:**
    Depending on the size of your dataset, this process can take several minutes:
 
    ```bash
    uv run start-tuning
    ```
 
-4. **Observe loss parameters:**
+5. **Observe loss parameters:**
    After tuning in complete, a training loss PNG will be saved in the root folder corresponding to the new model.
    Ideally the loss should minimize to near 0 after several training epochs.
 
    ![pugo-hilion_mean_loss](https://github.com/user-attachments/assets/f6c4d82b-678a-4ae5-bfb7-39dc59e1103d)
 
-5. **Test the new model:**
+6. **Test the new model:**
    Select the new tuned model and compare it against a set of prompting techniques (zero-shot, few-shot and chain-of-thought):
 
    ```bash
    uv run start-compare
    ```
 
-6. **Start Social Bots (optional):**:
+7. **Start Social Bots (optional):**:
 
    - Set up Twitter/X API credentials
    - Configure Telegram bot token

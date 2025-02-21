@@ -323,12 +323,14 @@ dependencies = [
     { name = "fastapi" },
     { name = "google-generativeai" },
     { name = "httpx" },
+    { name = "pandas" },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
     { name = "pyopenssl" },
     { name = "python-dotenv" },
     { name = "python-telegram-bot" },
     { name = "requests" },
+    { name = "seaborn" },
     { name = "structlog" },
     { name = "tweepy" },
     { name = "uvicorn" },
@@ -340,10 +342,6 @@ dev = [
     { name = "pytest" },
     { name = "ruff" },
 ]
-tuning = [
-    { name = "pandas" },
-    { name = "seaborn" },
-]
 
 [package.metadata]
 requires-dist = [
@@ -352,12 +350,14 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.115.8" },
     { name = "google-generativeai", specifier = ">=0.8.4" },
     { name = "httpx", specifier = ">=0.28.1" },
+    { name = "pandas", specifier = ">=2.2.3" },
     { name = "pydantic-settings", specifier = ">=2.7.1" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "pyopenssl", specifier = ">=25.0.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "python-telegram-bot", specifier = ">=20.7" },
     { name = "requests", specifier = ">=2.32.3" },
+    { name = "seaborn", specifier = ">=0.13.2" },
     { name = "structlog", specifier = ">=25.1.0" },
     { name = "tweepy", specifier = ">=4.15.0" },
     { name = "uvicorn", specifier = ">=0.34.0" },
@@ -368,10 +368,6 @@ dev = [
     { name = "pyright", specifier = ">=1.1.394" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "ruff", specifier = ">=0.9.6" },
-]
-tuning = [
-    { name = "pandas", specifier = ">=2.2.3" },
-    { name = "seaborn", specifier = ">=0.13.2" },
 ]
 
 [[package]]
