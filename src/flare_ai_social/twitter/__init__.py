@@ -1,3 +1,3 @@
-from .service import TwitterBot
+from .service import TwitterBot, TwitterConfig
 
-__all__ = ["TwitterBot"]
+__all__ = ["TwitterBot", "TwitterConfig"]
