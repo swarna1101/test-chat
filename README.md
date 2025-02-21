@@ -21,6 +21,7 @@ Flare AI Kit template for Social AI Agents.
 ### Prerequisites
 
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
+- [Docker](https://www.docker.com/)
 
 ### Fine-tune a model
 
