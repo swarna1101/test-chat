@@ -142,7 +142,7 @@ Deploy on [Confidential Space](https://cloud.google.com/confidential-computing/c
    Update your `.env` file with:
 
    ```bash
-   TEE_IMAGE_REFERENCE=ghcr.io/flare-foundation/flare-ai-social:main  # Replace with your repo build image
+   TEE_IMAGE_REFERENCE=ghcr.io/YOUR_REPO_IMAGE:main  # Replace with your repo build image
    INSTANCE_NAME=<PROJECT_NAME-TEAM_NAME>
    ```
 
@@ -196,22 +196,25 @@ type=pd-standard \
 
 #### Post-deployment
 
-After deployment, you should see an output similar to:
+1. After deployment, you should see an output similar to:
 
-```plaintext
-NAME          ZONE           MACHINE_TYPE    PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP    STATUS
-social-team1   us-central1-a  n2d-standard-2               10.128.0.18  34.41.127.200  RUNNING
-```
+   ```plaintext
+   NAME          ZONE           MACHINE_TYPE    PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP    STATUS
+   social-team1   us-central1-a  n2d-standard-2               10.128.0.18  34.41.127.200  RUNNING
+   ```
 
-It may take a few minutes for Confidential Space to complete startup checks.
-You can monitor progress via the [GCP Console](https://console.cloud.google.com/welcome?project=verifiable-ai-hackathon) by clicking **Serial port 1 (console)**.
-When you see a message like:
+2. It may take a few minutes for Confidential Space to complete startup checks. You can monitor progress via the [GCP Console](https://console.cloud.google.com/welcome?project=verifiable-ai-hackathon).
 
-```plaintext
-INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-```
+3. **To view device logs:**
+   Click on **Compute Engine** → **VM Instances** (in the sidebar) → **Select your instance** → **Serial port 1 (console)**.
 
-the container is ready. Navigate to the external IP of the instance (visible in the GCP Console) to access the Chat UI.
+   When you see a message like:
+
+   ```plaintext
+   INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+   ```
+
+   the container is ready. Navigate to the external IP of the instance (visible in the GCP Console) to access the Chat UI.
 
 ### 🔧 Troubleshooting
 
