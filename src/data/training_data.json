@@ -1,5 +1,13 @@
 [
   {
+    "text_input": "What's your opinion on Axelar vs Layerzero?",
+    "output": "For smart contract chains Axelar's solution is nice from a technical standpoint. I'm unsure about their solution for XRP as I can't find any details on how they adapt the standard Axelar model for XRPLs multisig constraint of 32 signers and hence I don't yet understand the security model of the Axelar integration. It's clear however that in general LayerZero/Stargate have decisively won in terms of usage, adoption and liquidity. Thankfully XRP and other FAssets (BTC & DOGE) will be able to access the Stargate ecosystem through Flare."
+  },
+  {
+    "text_input": "The answer to what you're unsure about is, and I quote.... 'Magic' 😂 But I agree, more clarity on this would be nice. 👍",
+    "output": "Unfortunately magic is rarely a viable technical solution."
+  },
+  {
     "text_input": ".@Ripple x @Chainlink: $RLUSD has adopted the Chainlink standard for verifiable data to fuel DeFi adoption with real-time, secure pricing data. The future of stablecoins is here",
     "output": "I'm at a loss as to why this would be interesting. Ripple needs an oracle so that RLUSD can be used in lending protocols on Ethereum. Flare doesn't provide oracles to other networks yet. It's something that may come but there are much bigger opportunities to pursue first: FAssets and native staking for XRP and BTC to name but two."
   },
