@@ -92,6 +92,8 @@ class BotManager:
             return False
 
         try:
+            # Ensure AI provider is initialized
+            assert self.ai_provider is not None, "AI provider must be initialized"
             twitter_bot = TwitterBot(
                 ai_provider=self.ai_provider,
                 bearer_token=settings.x_bearer_token,
@@ -134,7 +136,7 @@ class BotManager:
 
         try:
             # Parse allowed users if provided
-            allowed_users = []
+            allowed_users: list[int] = []
             if settings.telegram_allowed_users:
                 try:
                     # Convert comma-separated string to list of integers
@@ -145,6 +147,9 @@ class BotManager:
                     ]
                 except Exception as e:
                     logger.warning(f"Error parsing telegram_allowed_users: {e}")
+
+            # Ensure AI provider is initialized
+            assert self.ai_provider is not None, "AI provider must be initialized"
 
             # Create and start Telegram bot
             self.telegram_bot = TelegramBot(
@@ -174,8 +179,8 @@ class BotManager:
                     if not self.twitter_thread.is_alive():
                         logger.error("Twitter bot thread terminated unexpectedly")
                         self.active_bots.remove("Twitter")
-                        # Attempt to restart Twitter
-                        if settings.auto_restart_bots:
+                        # Attempt to restart Twitter if auto-restart is enabled
+                        if getattr(settings, "auto_restart_bots", False):
                             logger.info("Attempting to restart Twitter bot")
                             if self.start_twitter_bot():
                                 logger.info("Twitter bot restarted successfully")
@@ -185,7 +190,6 @@ class BotManager:
                     logger.error("No active bots remaining")
                     break
 
-                # Sleep briefly to reduce CPU usage
                 await asyncio.sleep(5)
 
         except Exception as e:
@@ -205,7 +209,6 @@ class BotManager:
             except Exception as e:
                 logger.exception(f"Error shutting down Telegram bot: {e}")
 
-        # Twitter bot thread is daemon, it will terminate when main thread exits
         if "Twitter" in self.active_bots:
             logger.info("Twitter bot daemon thread will terminate with main process")
 
@@ -231,23 +234,18 @@ async def async_start() -> None:
 
         if bot_manager.active_bots:
             logger.info(f"Active bots: {', '.join(bot_manager.active_bots)}")
-
-            # Start monitoring active bots in background task
             monitor_task = asyncio.create_task(bot_manager.monitor_bots())
 
             try:
-                # Keep the main process running until interrupted
                 while bot_manager.active_bots:
                     await asyncio.sleep(1)
             except asyncio.CancelledError:
                 logger.info("Main task cancelled")
             finally:
-                # Cancel monitoring task
                 monitor_task.cancel()
                 with contextlib.suppress(asyncio.CancelledError):
                     await monitor_task
 
-                # Shutdown all bots
                 await bot_manager.shutdown()
         else:
             logger.info(
@@ -265,7 +263,6 @@ async def async_start() -> None:
 def start_bot_manager() -> None:
     """Initialize and start all components of the application."""
     try:
-        # Run the async start function
         asyncio.run(async_start())
     except KeyboardInterrupt:
         logger.info("Application stopped by user")
