@@ -67,7 +67,7 @@ Flare AI Kit template for Social AI Agents.
    uv run start-compare
    ```
 
-7. **Start Social Bots (optional):**:
+7. **Start Social Bots (optional):**
 
    - Set up Twitter/X API credentials
    - Configure Telegram bot token
