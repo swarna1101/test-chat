@@ -3,7 +3,7 @@ import time
 from typing import Any, cast
 
 import structlog
-from telegram import Bot, Update, Message, Chat, User, MessageEntity
+from telegram import Bot, Chat, Message, MessageEntity, Update, User
 from telegram.error import TelegramError
 from telegram.ext import (
     Application,
