@@ -28,13 +28,13 @@ Flare AI Kit template for Social AI Agents.
 
 1. **Prepare Environment File**: Rename `.env.example` to `.env` and update these model fine-tuning parameters:
 
-   | Parameter | Description | Default |
-         |-----------|-------------|---------|
-   | `tuned_model_name` | Name of the newly tuned model | pugo-hilion |
-   | `tuning_source_model` | Name of the foundational model to tune on | models/gemini-1.5-flash-001-tuning |
-   | `epoch_count` | Number of tuning epochs to run. An epoch is a pass over the whole dataset | 30 |
-   | `batch_size` | Number of examples to use in each training batch | 4 |
-   | `learning_rate` | Step size multiplier for the gradient updates | 0.001 |
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `tuned_model_name` | Name of the newly tuned model | pugo-hilion |
+| `tuning_source_model` | Name of the foundational model to tune on | models/gemini-1.5-flash-001-tuning |
+| `epoch_count` | Number of tuning epochs to run. An epoch is a pass over the whole dataset | 30 |
+| `batch_size` | Number of examples to use in each training batch | 4 |
+| `learning_rate` | Step size multiplier for the gradient updates | 0.001 |
 
 
 2. **Prepare a dataset:**
