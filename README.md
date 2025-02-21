@@ -85,7 +85,7 @@ Deploy Flare AI DeFAI on a Confidential Space Instances (using AMD SEV or Intel 
    Update your `.env` file with:
 
    ```bash
-   TEE_IMAGE_REFERENCE=ghcr.io/flare-foundation/flare-ai-social:main  # Replace with your repo build image
+   TEE_IMAGE_REFERENCE=ghcr.io/flare-foundation/flare-ai-defai:main  # Replace with your repo build image
    INSTANCE_NAME=<PROJECT_NAME-TEAM_NAME>
    ```
 
@@ -101,25 +101,23 @@ Deploy Flare AI DeFAI on a Confidential Space Instances (using AMD SEV or Intel 
 
    ```bash
    echo $TEE_IMAGE_REFERENCE
-   # Expected output: ghcr.io/flare-foundation/flare-ai-social:main
+   # Expected output: ghcr.io/YOUR_REPO_IMAGE:main
    ```
 
 ### Deploying to Confidential Space
 
-For deployment on Confidential Space (AMD SEV):
+For deployment on Confidential Space (AMD SEV TEE):
 
 ```bash
 gcloud compute instances create $INSTANCE_NAME \
   --project=verifiable-ai-hackathon \
-  --zone=us-central1-c \
+  --zone=us-central1-a \
   --machine-type=n2d-standard-2 \
   --network-interface=network-tier=PREMIUM,nic-type=GVNIC,stack-type=IPV4_ONLY,subnet=default \
   --metadata=tee-image-reference=$TEE_IMAGE_REFERENCE,\
 tee-container-log-redirect=true,\
 tee-env-GEMINI_API_KEY=$GEMINI_API_KEY,\
-tee-env-GEMINI_MODEL=$GEMINI_MODEL,\
-tee-env-WEB3_PROVIDER_URL=$WEB3_PROVIDER_URL,\
-tee-env-SIMULATE_ATTESTATION=false \
+tee-env-TUNED_MODEL_NAME=$TUNED_MODEL_NAME,\
   --maintenance-policy=MIGRATE \
   --provisioning-model=STANDARD \
   --service-account=confidential-sa@verifiable-ai-hackathon.iam.gserviceaccount.com \
@@ -150,10 +148,27 @@ social-team1   us-central1-c  n2d-standard-2               10.128.0.18  34.41.12
 ```
 
 It may take a few minutes for Confidential Space to complete startup checks.
-You can monitor progress via the [GCP Console](https://console.cloud.google.com/welcome?project=verifiable-ai-hackathon) by clicking **Serial port 1 (console)**. When you see a message like:
+You can monitor progress via the [GCP Console](https://console.cloud.google.com/welcome?project=verifiable-ai-hackathon) by clicking **Serial port 1 (console)**. 
+When you see a message like:
 
 ```plaintext
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
 ```
 
 the container is ready. Navigate to the external IP of the instance (visible in the GCP Console) to access the Chat UI.
+
+### 🔧 Troubleshooting
+
+If you encounter issues, follow these steps:
+
+1. **Check Logs:**
+
+   ```bash
+   gcloud compute instances get-serial-port-output $INSTANCE_NAME --project=verifiable-ai-hackathon
+   ```
+
+2. **Verify API Key(s):**  
+   Ensure that all API Keys are set correctly (e.g. `GEMINI_API_KEY`).
+
+3. **Check Firewall Settings:**  
+   Confirm that your instance is publicly accessible on port `80`.
