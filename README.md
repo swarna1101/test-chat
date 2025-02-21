@@ -1,147 +1,122 @@
-# 🤖 Flare AI Social
+# Flare AI Social
 
-A robust, extensible social media bot framework that monitors and automatically responds to mentions across multiple platforms using AI-powered responses.
-
-## 🚀 Key Features
-
-- **Multi-platform Support**: Monitor mentions and messages across Twitter/X and Telegram
-- **AI-powered Responses**: Generate contextually relevant replies using Google's Gemini AI
-- **Model Fine-tuning**: Support for custom-tuned models with example dataset
-- **Rate Limit Handling**: Built-in exponential backoff and retry mechanisms
-- **TEE Integration**: Secure execution in Trusted Execution Environment
-
-## 🏗️ Project Structure
-
-```
-src/flare_ai_social/
-├── ai/                     # AI Provider implementations
-│   ├── base.py            # Base AI provider abstraction
-│   ├── gemini.py          # Google Gemini integration
-│   └── openrouter.py      # OpenRouter integration
-├── api/                    # API layer
-│   └── routes/            # API endpoint definitions
-├── attestation/           # TEE attestation implementation
-│   ├── vtpm_attestation.py # vTPM client
-│   └── vtpm_validation.py  # Token validation
-├── prompts/               # Prompt engineering templates
-│   └── templates.py       # Different prompt strategies
-├── telegram/              # Telegram bot implementation
-│   └── service.py         # Telegram service logic
-├── twitter/               # Twitter bot implementation
-│   └── service.py         # Twitter service logic
-├── bot_manager.py         # Bot orchestration
-├── main.py                # FastAPI application
-├── settings.py            # Configuration settings
-└── tune_model.py          # Model fine-tuning utilities
-```
+Flare AI Kit template for Social AI Agents.
 
 ## 🏗️ Build & Run Instructions
 
-### Fine-tuning a Model
+**Prepare the Environment File:**  
+ Rename `.env.example` to `.env` and update the variables accordingly.
+Some parameters are specific to model fine-tuning:
 
-1. **Prepare Environment File**:  
-   Rename `.env.example` to `.env` and update these model fine-tuning parameters:
+| Parameter             | Description                                                                | Default                              |
+| --------------------- | -------------------------------------------------------------------------- | ------------------------------------ |
+| `tuned_model_name`    | Name of the newly tuned model.                                             | `pugo-hilion`                        |
+| `tuning_source_model` | Name of the foundational model to tune on.                                 | `models/gemini-1.5-flash-001-tuning` |
+| `epoch_count`         | Number of tuning epochs to run. An epoch is a pass over the whole dataset. | `30`                                 |
+| `batch_size`          | Number of examples to use in each training batch.                          | `4`                                  |
+| `learning_rate`       | Step size multiplier for the gradient updates.                             | `0.001`                              |
 
-   | Parameter             | Description                                                                | Default                              |
-      | --------------------- | -------------------------------------------------------------------------- | ------------------------------------ |
-   | `tuned_model_name`    | Name of the newly tuned model.                                             | `pugo-hilion`                        |
-   | `tuning_source_model` | Name of the foundational model to tune on.                                 | `models/gemini-1.5-flash-001-tuning` |
-   | `epoch_count`         | Number of tuning epochs to run. An epoch is a pass over the whole dataset. | `30`                                 |
-   | `batch_size`          | Number of examples to use in each training batch.                          | `4`                                  |
-   | `learning_rate`       | Step size multiplier for the gradient updates.                             | `0.001`                              |
+### Fine tuning a model over a dataset
 
-2. **Prepare Dataset**:
-   - Example dataset provided in `src/data/training_data.json`
-   - Based on Hugo Philion's X/Twitter feed
-   - Compatible with any public dataset
+1. **Prepare a dataset:**
+   An example dataset is provided in `src/data/training_data.json`, which consists of tweets from
+   [Hugo Philion's X](https://x.com/HugoPhilion) account. You can use any publicly available dataset
+   for model fine-tuning.
 
-3. **Tune Model**:
+2. **Tune a new model**
+   Set the name of the new tuned model in `src/flare_ai_social/tune_model.py`, then:
+
    ```bash
    uv run start-tuning
    ```
 
-4. **Observe loss parameters:**
+3. **Observe loss parameters:**
    After tuning in complete, a training loss PNG will be saved in the root folder corresponding to the new model.
    Ideally the loss should minimize to near 0 after several training epochs.
 
-![pugo-hilion_mean_loss](https://github.com/user-attachments/assets/f6c4d82b-678a-4ae5-bfb7-39dc59e1103d)
+   ![pugo-hilion_mean_loss](https://github.com/user-attachments/assets/f6c4d82b-678a-4ae5-bfb7-39dc59e1103d)
 
-5. **Test Model**:
+4. **Test the new model**
    Select the new tuned model and compare it against a set of prompting techniques (zero-shot, few-shot and chain-of-thought):
 
    ```bash
    uv run start-compare
    ```
-   
-### Running Social Bots
 
-1. **Configure Platforms:**
-  - Set up Twitter/X API credentials 
-  - Configure Telegram bot token 
-  - Enable/disable platforms as needed
+### Build using Docker (Recommended)
 
-2. **Start Bots:**
+**Note:** You can only perform this step once you have finishing training a new model.
 
-   ```bash
-   uv run start-bots
-   ```
-   
-### Build with Docker
+The Docker setup mimics a TEE environment and includes an Nginx server for routing, while Supervisor manages both the backend and frontend services in a single container.
 
-After model training:
+1. **Build the Docker Image:**
 
-1. **Build Image**:
    ```bash
    docker build -t flare-ai-social .
    ```
 
-2. **Run Container**:
+2. **Run the Docker Container:**
+
    ```bash
    docker run -p 80:80 -it --env-file .env flare-ai-social
    ```
 
-3. **Access UI**: Navigate to `http://localhost:80`
+3. **Access the Frontend:**  
+   Open your browser and navigate to [http://localhost:80](http://localhost:80) to interact with the Chat UI.
 
 ## 🚀 Deploy on TEE
 
-Deploy on Confidential Space Instance (AMD SEV/Intel TDX) for hardware-backed security.
+Deploy on a [Confidential Space](https://cloud.google.com/confidential-computing/confidential-space/docs/confidential-space-overview) using AMD SEV.
 
 ### Prerequisites
 
-- GCP account with `verifiable-ai-hackathon` access
-- [Gemini API key](https://aistudio.google.com/app/apikey)
-- [gcloud CLI](https://cloud.google.com/sdk/docs/install) installed
+- **Google Cloud Platform Account:**  
+  Access to the `verifiable-ai-hackathon` project is required.
 
-### Environment Setup
+- **Gemini API Key:**  
+  Ensure your [Gemini API key](https://aistudio.google.com/app/apikey) is linked to the project.
 
-1. **Configure Environment**:
+- **gcloud CLI:**  
+  Install and authenticate the [gcloud CLI](https://cloud.google.com/sdk/docs/install).
+
+### Environment Configuration
+
+1. **Set Environment Variables:**  
+   Update your `.env` file with:
+
    ```bash
-   # In .env file
-   TEE_IMAGE_REFERENCE=ghcr.io/flare-foundation/flare-ai-social:main
+   TEE_IMAGE_REFERENCE=ghcr.io/flare-foundation/flare-ai-social:main  # Replace with your repo build image
    INSTANCE_NAME=<PROJECT_NAME-TEAM_NAME>
    ```
 
-2. **Load Variables**:
+2. **Load Environment Variables:**
+
    ```bash
    source .env
    ```
 
-### Deployment
+   > **Reminder:** Run the above command in every new shell session.
 
-Deploy to Confidential Space (AMD SEV):
+3. **Verify the Setup:**
+
+   ```bash
+   echo $TEE_IMAGE_REFERENCE # Expected output: Your repo build image
+   ```
+
+### Deploying to Confidential Space
+
+Run the following command:
 
 ```bash
 gcloud compute instances create $INSTANCE_NAME \
   --project=verifiable-ai-hackathon \
-  --zone=us-central1-c \
+  --zone=us-central1-a \
   --machine-type=n2d-standard-2 \
   --network-interface=network-tier=PREMIUM,nic-type=GVNIC,stack-type=IPV4_ONLY,subnet=default \
   --metadata=tee-image-reference=$TEE_IMAGE_REFERENCE,\
 tee-container-log-redirect=true,\
 tee-env-GEMINI_API_KEY=$GEMINI_API_KEY,\
-tee-env-GEMINI_MODEL=$GEMINI_MODEL,\
-tee-env-WEB3_PROVIDER_URL=$WEB3_PROVIDER_URL,\
-tee-env-SIMULATE_ATTESTATION=false \
+tee-env-TUNED_MODEL_NAME=$TUNED_MODEL_NAME,\
   --maintenance-policy=MIGRATE \
   --provisioning-model=STANDARD \
   --service-account=confidential-sa@verifiable-ai-hackathon.iam.gserviceaccount.com \
@@ -162,16 +137,37 @@ type=pd-standard \
   --confidential-compute-type=SEV
 ```
 
-### Post-deployment
+#### Post-deployment
 
-Monitor startup in [GCP Console](https://console.cloud.google.com/welcome?project=verifiable-ai-hackathon) under **Serial port 1**. When you see:
+After deployment, you should see an output similar to:
 
 ```plaintext
-INFO: Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+NAME          ZONE           MACHINE_TYPE    PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP    STATUS
+social-team1   us-central1-a  n2d-standard-2               10.128.0.18  34.41.127.200  RUNNING
 ```
 
-Access the UI via the instance's external IP.
+It may take a few minutes for Confidential Space to complete startup checks.
+You can monitor progress via the [GCP Console](https://console.cloud.google.com/welcome?project=verifiable-ai-hackathon) by clicking **Serial port 1 (console)**.
+When you see a message like:
 
-## 💡 Example Use Cases & Next Steps
+```plaintext
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+```
 
-TODO: Add example use cases and next steps for the project.
+the container is ready. Navigate to the external IP of the instance (visible in the GCP Console) to access the Chat UI.
+
+### 🔧 Troubleshooting
+
+If you encounter issues, follow these steps:
+
+1. **Check Logs:**
+
+   ```bash
+   gcloud compute instances get-serial-port-output $INSTANCE_NAME --project=verifiable-ai-hackathon
+   ```
+
+2. **Verify API Key(s):**  
+   Ensure that all API Keys are set correctly (e.g. `GEMINI_API_KEY`).
+
+3. **Check Firewall Settings:**  
+   Confirm that your instance is publicly accessible on port `80`.
