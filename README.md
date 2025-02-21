@@ -66,7 +66,7 @@ The Docker setup mimics a TEE environment and includes an Nginx server for routi
 
 ## 🚀 Deploy on TEE
 
-Deploy Flare AI DeFAI on a Confidential Space Instances (using AMD SEV or Intel TDX) to benefit from enhanced hardware-backed security.
+Deploy on a [Confidential Space](https://cloud.google.com/confidential-computing/confidential-space/docs/confidential-space-overview) using AMD SEV.
 
 ### Prerequisites
 
@@ -100,13 +100,12 @@ Deploy Flare AI DeFAI on a Confidential Space Instances (using AMD SEV or Intel 
 3. **Verify the Setup:**
 
    ```bash
-   echo $TEE_IMAGE_REFERENCE
-   # Expected output: ghcr.io/flare-foundation/flare-ai-social:main # Your repo build image
+   echo $TEE_IMAGE_REFERENCE # Expected output: Your repo build image
    ```
 
 ### Deploying to Confidential Space
 
-For deployment on Confidential Space (AMD SEV TEE):
+Run the following command:
 
 ```bash
 gcloud compute instances create $INSTANCE_NAME \
@@ -144,7 +143,7 @@ After deployment, you should see an output similar to:
 
 ```plaintext
 NAME          ZONE           MACHINE_TYPE    PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP    STATUS
-social-team1   us-central1-c  n2d-standard-2               10.128.0.18  34.41.127.200  RUNNING
+social-team1   us-central1-a  n2d-standard-2               10.128.0.18  34.41.127.200  RUNNING
 ```
 
 It may take a few minutes for Confidential Space to complete startup checks.
