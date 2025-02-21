@@ -152,7 +152,7 @@ Deploy on [Confidential Space](https://cloud.google.com/confidential-computing/c
    source .env
    ```
 
-   > **Reminder:** Run the above command in every new shell session.
+   > **Reminder:** Run the above command in every new shell session. On Windows, we recommend using [git BASH](https://gitforwindows.org) to access commands like `source`.
 
 3. **Verify the Setup:**
 
