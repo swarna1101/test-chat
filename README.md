@@ -87,8 +87,13 @@ The Docker setup mimics a TEE environment and includes an Nginx server for routi
    ```bash
    docker build -t flare-ai-social .
    ```
+**NOTE:** For Windows users encountering DNS issues, you can use the alternative Windows Dockerfile:
 
-2. **Run the Docker Container:**
+   ```bash
+     docker build -f Dockerfile.windows -t flare-ai-social .
+   ```
+
+2. b**Run the Docker Container:**
 
    ```bash
    docker run -p 80:80 -it --env-file .env flare-ai-social
@@ -235,4 +240,34 @@ If you encounter issues, follow these steps:
 
 ## 💡 Next Steps
 
-TODO
+Below are several detailed project ideas demonstrating how the template can be used to build autonomous AI agents:
+
+### 1. Travel AI Agent
+- Implement a travel service layer that:
+   - Connects to flight/hotel booking APIs
+   - Manages itinerary generation
+   - Handles payment processing
+   - Stores user preferences/history
+- Agent interfaces with this to:
+   - Process natural language travel requests
+   - Check availability and pricing
+   - Generate customized itineraries
+   - Handle booking confirmations
+- Example: User asks "Book me a trip to Paris" -> Agent queries travel service for options -> Handles booking flow through conversation
+
+### 2. Event & Updates Agent
+- **Core Concept**: Keep community informed about Flare developments
+- **Implementation**:
+   - Monitor official channels for announcements
+   - Summarize technical updates in accessible language
+   - Answer questions about recent changes
+   - Generate event reminders and summaries
+
+### 3. DeFi Portfolio AI Agent
+
+- Build a service that tracks single wallet DeFi positions, analyzes APY/risks, and calculates profit/loss
+- Process natural language queries through Twitter/Telegram for portfolio stats and alerts
+- Run sensitive wallet monitoring securely in TEE with attestation
+- Examples: "Check my wallet APY", "Alert me when health factor < 80%", "Show today's earnings"
+
+

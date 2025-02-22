@@ -1,5 +1,5 @@
 # Stage 1: Build Frontend
-FROM node:18-alpine AS frontend-builder
+FROM mcr.microsoft.com/mirror/docker/library/node:18-alpine AS frontend-builder
 WORKDIR /frontend
 COPY chat-ui/ .
 RUN npm install
