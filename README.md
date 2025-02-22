@@ -88,7 +88,13 @@ The Docker setup mimics a TEE environment and includes an Nginx server for routi
    docker build -t flare-ai-social .
    ```
 
-2. **Run the Docker Container:**
+   **NOTE:** For Windows users encountering DNS issues, you can use the alternative Windows Dockerfile:
+
+   ```bash
+     docker build -f Dockerfile.windows -t flare-ai-social .
+   ```
+
+2. b**Run the Docker Container:**
 
    ```bash
    docker run -p 80:80 -it --env-file .env flare-ai-social
@@ -235,4 +241,50 @@ If you encounter issues, follow these steps:
 
 ## 💡 Next Steps
 
-TODO
+Below are several project ideas demonstrating how the template can be used to build useful social AI agents:
+
+### Dev Support on Telegram
+
+- **Integrate with flare-ai-rag:**  
+  Combine the social AI agent with the [flare-ai-rag](https://github.com/flare-foundation/flare-ai-rag) model trained on the [Flare Developer Hub](https://dev.flare.network) dataset.
+- **Enhanced Developer Interaction:**
+
+  - Provide targeted support for developers exploring [FTSO](https://dev.flare.network/ftso/overview) and [FDC](https://dev.flare.network/fdc/overview).
+  - Implement code-based interactions, including live debugging tips and code snippet sharing.
+
+- **Action Steps:**
+  - Connect the model to GitHub repositories to fetch live code examples.
+  - Fine-tune prompt templates using technical documentation to improve precision in code-related queries.
+
+### Community Support on Telegram
+
+- **Simplify Technical Updates:**
+  - Convert detailed [Flare governance proposals](https://proposals.flare.network) into concise, accessible summaries for community members.
+- **Real-Time Monitoring and Q&A:**
+
+  - Monitor channels like the [Flare Telegram](https://t.me/FlareNetwork) for live updates.
+  - Automatically answer common community questions regarding platform changes.
+
+- **Action Steps:**
+  - Integrate modules for content summarization and sentiment analysis.
+  - Establish a feedback loop to refine responses based on community engagement.
+
+### Social Media Sentiment & Moderation Bot
+
+- **Purpose:**  
+  Analyze sentiment on platforms like Twitter, Reddit, or Discord to monitor community mood, flag problematic content, and generate real-time moderation reports.
+
+- **Action Steps:**
+  - Leverage NLP libraries for sentiment analysis and content filtering.
+  - Integrate with social media APIs to capture and process live data.
+  - Set up dashboards to monitor trends and flagged content.
+
+### Personalized Content Curation Agent
+
+- **Purpose:**  
+  Curate personalized content such as news, blog posts, or tutorials tailored to user interests and engagement history.
+
+- **Action Steps:**
+  - Employ user profiling techniques to analyze preferences.
+  - Use machine learning algorithms to recommend content based on past interactions.
+  - Continuously refine the recommendation engine with user feedback and engagement metrics.
