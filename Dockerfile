@@ -1,28 +1,66 @@
 # Stage 1: Build Frontend
-FROM node:18-alpine AS frontend-builder
+FROM mcr.microsoft.com/mirror/docker/library/node:18-alpine AS frontend-builder
 WORKDIR /frontend
 COPY chat-ui/ .
 RUN npm install
 RUN npm run build
 
 # Stage 2: Build Backend
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS backend-builder
-ADD . /flare-ai-social
+FROM mcr.microsoft.com/mirror/docker/library/python:3.11-slim AS backend-builder
 WORKDIR /flare-ai-social
-RUN uv sync --frozen
+
+# Install build dependencies and uv globally
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    pip install uv
+
+# Create and activate virtual environment
+RUN python -m venv .venv && \
+    . .venv/bin/activate && \
+    python -m pip install --upgrade pip
+
+ENV PATH="/flare-ai-social/.venv/bin:$PATH"
+ENV VIRTUAL_ENV="/flare-ai-social/.venv"
+ENV PYTHONPATH="/flare-ai-social/.venv/lib/python3.11/site-packages"
+
+# Copy project files
+COPY pyproject.toml ./
+COPY . .
+
+# Install dependencies based on the file type
+RUN if [ -f "requirements.txt" ]; then \
+        uv pip install -r requirements.txt; \
+    elif [ -f "pyproject.toml" ]; then \
+        uv sync --frozen; \
+    fi
 
 # Stage 3: Final Image
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+FROM mcr.microsoft.com/mirror/docker/library/python:3.11-slim
 
-# Install nginx
-RUN apt-get update && apt-get install -y nginx supervisor curl && \
-    rm -rf /var/lib/apt/lists/*
+# Install runtime dependencies and uv
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    nginx \
+    supervisor \
+    curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    pip install uv
 
 WORKDIR /app
+
+# Copy virtual environment and project files
 COPY --from=backend-builder /flare-ai-social/.venv ./.venv
 COPY --from=backend-builder /flare-ai-social/src ./src
 COPY --from=backend-builder /flare-ai-social/pyproject.toml .
 COPY --from=backend-builder /flare-ai-social/README.md .
+
+# Set up Python environment in the final stage
+ENV PATH="/app/.venv/bin:$PATH"
+ENV VIRTUAL_ENV="/app/.venv"
+ENV PYTHONPATH="/app/.venv/lib/python3.11/site-packages"
 
 # Copy frontend files
 COPY --from=frontend-builder /frontend/build /usr/share/nginx/html
