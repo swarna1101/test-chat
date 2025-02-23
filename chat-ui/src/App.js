@@ -8,7 +8,7 @@ const BACKEND_ROUTE = 'api/routes/chat/'
 const ChatInterface = () => {
   const [messages, setMessages] = useState([
     { 
-      text: "Hi, I'm Pugo Hilion!",
+      text: "Hi, I'm Agent Pugo Hilion!",
       type: 'bot' 
     }
   ]);
@@ -109,8 +109,8 @@ const ChatInterface = () => {
       <div className="flex flex-col h-full max-w-4xl mx-auto w-full shadow-lg bg-white">
         {/* Header */}
         <div className="bg-pink-600 text-white p-4">
-          <h1 className="text-xl font-bold">Pugo Hilion</h1>
-          <p className="text-sm opacity-80">Social AI agent</p>
+          <h1 className="text-xl font-bold">Agent Pugo Hilion</h1>
+          <p className="text-sm opacity-80">A social AI agent fine-tuned on Hugo Philion's tweets (gemini-1.5-flash).</p>
         </div>
 
         {/* Messages container */}
