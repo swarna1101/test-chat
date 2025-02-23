@@ -94,7 +94,7 @@ The Docker setup mimics a TEE environment and includes an Nginx server for routi
      docker build -f Dockerfile.windows -t flare-ai-social .
    ```
 
-2. b**Run the Docker Container:**
+2. **Run the Docker Container:**
 
    ```bash
    docker run -p 80:80 -it --env-file .env flare-ai-social
