@@ -44,16 +44,23 @@ def get_tuning_supported_models() -> list[str]:
     return models
 
 
-def delete_existing_model(model_id: str) -> None:
+def check_model_existence(model_id: str, delete_if_exists: bool = False) -> None:  # noqa: FBT001, FBT002
     """
-    Delete a tuned model if it exists.
+    Check if a tuned model exists.
 
     Args:
         model_id (str): ID of the model to delete
+        delete_if_exists (bool): Delete model (WARNING, leave False if unsure)
     """
     full_model_id = f"tunedModels/{model_id}"
     for tuned_model in genai.list_tuned_models():
         if tuned_model.name == full_model_id:
+            if not delete_if_exists:
+                msg = (
+                    f"Model {full_model_id} already exists,"
+                    "try using it with `uv run start-compare`"
+                )
+                raise ValueError(msg)
             logger.info("deleting existing model", tuned_model_id=model_id)
             genai.delete_tuned_model(full_model_id)
             break
@@ -130,8 +137,8 @@ def start() -> None:
         Exception: If model training fails
     """
     new_model_id = settings.tuned_model_name
-    # Delete existing model if present
-    delete_existing_model(new_model_id)
+    # Check if model already exists
+    check_model_existence(new_model_id)
 
     # Load and validate training data
     training_dataset = load_training_data(settings.tuning_dataset_path)
