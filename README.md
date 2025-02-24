@@ -88,11 +88,7 @@ The Docker setup mimics a TEE environment and includes an Nginx server for routi
    docker build -t flare-ai-social .
    ```
 
-   **NOTE:** For Windows users encountering DNS issues, you can use the alternative Windows Dockerfile:
-
-   ```bash
-     docker build -f Dockerfile.windows -t flare-ai-social .
-   ```
+   **NOTE:** Windows users may encounter issues with `uv` due to incorrect parsing. For this try converting the `pyproject.toml` and `uv.lock` files to unix format.
 
 2. **Run the Docker Container:**
 
