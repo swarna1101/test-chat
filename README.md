@@ -78,7 +78,7 @@ Flare AI Kit template for Social AI Agents.
    uv run start-bots
    ```
 
-### Interact with model
+### Build Using Docker (Recommended)
 
 The Docker setup mimics a TEE environment and includes an Nginx server for routing, while Supervisor manages both the backend and frontend services in a single container.
 
@@ -103,6 +103,51 @@ The Docker setup mimics a TEE environment and includes an Nginx server for routi
 3. **Access the Frontend:**  
    Open your browser and navigate to [http://localhost:80](http://localhost:80) to interact with the tuned model via the Chat UI.
 
+### 🛠 Build Manually
+
+Flare AI Social is composed of a Python-based backend and a JavaScript frontend. Follow these steps for manual setup:
+
+#### Backend Setup
+
+1. **Install Dependencies:**
+   Use [uv](https://docs.astral.sh/uv/getting-started/installation/) to install backend dependencies:
+
+   ```bash
+   uv sync --all-extras
+   ```
+   
+2. **Start the Backend:**
+   The backend runs by default on `0.0.0.0:80`:
+
+    ```bash
+   uv run start-backend
+    ```
+
+#### Frontend Setup
+
+1. **Install Dependencies:**
+   In the `chat-ui/` directory, install the required packages using [npm](https://nodejs.org/en/download):
+
+   ```bash
+   cd chat-ui/
+   npm install
+   ```
+
+2. **Configure the Frontend:**
+   Update the backend URL in `chat-ui/src/App.js` for testing:
+
+   ```js
+   const BACKEND_ROUTE = "http://localhost:8080/api/routes/chat/";
+   ```
+
+   > **Note:** Remember to change `BACKEND_ROUTE` back to `'api/routes/chat/'` after testing.
+
+3. **Start the Frontend:**
+
+   ```bash
+   npm start
+   ```
+   
 ## 📁 Repo Structure
 
 ```plaintext
