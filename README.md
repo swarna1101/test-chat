@@ -58,17 +58,17 @@ Flare AI Kit template for Social AI Agents.
 5. **Observe loss parameters:**
    After tuning in complete, a training loss PNG will be saved in the root folder corresponding to the new model.
    Ideally the loss should minimize to near 0 after several training epochs.
+   
+    ![agent-pugo-hilion_mean_loss](https://github.com/user-attachments/assets/39882da7-8f5f-45cd-afca-709f1333edf4)
 
-   ![pugo-hilion_mean_loss](https://github.com/user-attachments/assets/f6c4d82b-678a-4ae5-bfb7-39dc59e1103d)
-
-6. **Test the new model:**
+7. **Test the new model:**
    Select the new tuned model and compare it against a set of prompting techniques (zero-shot, few-shot and chain-of-thought):
 
    ```bash
    uv run start-compare
    ```
 
-7. **Start Social Bots (optional):**
+8. **Start Social Bots (optional):**
 
    - Set up Twitter/X API credentials
    - Configure Telegram bot token
