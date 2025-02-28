@@ -58,17 +58,17 @@ Flare AI Kit template for Social AI Agents.
 5. **Observe loss parameters:**
    After tuning in complete, a training loss PNG will be saved in the root folder corresponding to the new model.
    Ideally the loss should minimize to near 0 after several training epochs.
-   
-    ![agent-pugo-hilion_mean_loss](https://github.com/user-attachments/assets/39882da7-8f5f-45cd-afca-709f1333edf4)
 
-7. **Test the new model:**
+   ![agent-pugo-hilion_mean_loss](https://github.com/user-attachments/assets/39882da7-8f5f-45cd-afca-709f1333edf4)
+
+6. **Test the new model:**
    Select the new tuned model and compare it against a set of prompting techniques (zero-shot, few-shot and chain-of-thought):
 
    ```bash
    uv run start-compare
    ```
 
-8. **Start Social Bots (optional):**
+7. **Start Social Bots (optional):**
 
    - Set up Twitter/X API credentials
    - Configure Telegram bot token
@@ -111,13 +111,13 @@ Flare AI Social is composed of a Python-based backend and a JavaScript frontend.
    ```bash
    uv sync --all-extras
    ```
-   
+
 2. **Start the Backend:**
    The backend runs by default on `0.0.0.0:80`:
 
-    ```bash
+   ```bash
    uv run start-backend
-    ```
+   ```
 
 #### Frontend Setup
 
@@ -143,7 +143,7 @@ Flare AI Social is composed of a Python-based backend and a JavaScript frontend.
    ```bash
    npm start
    ```
-   
+
 ## 📁 Repo Structure
 
 ```plaintext
@@ -215,7 +215,7 @@ Run the following command:
 ```bash
 gcloud compute instances create $INSTANCE_NAME \
   --project=verifiable-ai-hackathon \
-  --zone=us-central1-a \
+  --zone=us-central1-c \
   --machine-type=n2d-standard-2 \
   --network-interface=network-tier=PREMIUM,nic-type=GVNIC,stack-type=IPV4_ONLY,subnet=default \
   --metadata=tee-image-reference=$TEE_IMAGE_REFERENCE,\
