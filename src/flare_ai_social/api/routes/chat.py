@@ -90,6 +90,16 @@ class ChatRouter:
                 self.logger.exception("message_handling_failed", error=str(e))
                 raise HTTPException(status_code=500, detail=str(e)) from e
 
+        @self._router.get("/ping")
+        async def ping() -> dict[str, str]:  # pyright: ignore [reportUnusedFunction]
+            """
+            Simple ping endpoint to check if the service is up.
+
+            Returns:
+                dict[str, str]: Status message
+            """
+            return {"status": "ok"}
+
     @property
     def router(self) -> APIRouter:
         """Get the FastAPI router with registered routes."""
